@@ -28,6 +28,9 @@
 
 #include <libsolidity/analysis/ConstantEvaluator.h>
 
+#include <liblangutil/ErrorReporter.h>
+#include <liblangutil/SourceLocation.h>
+
 #include <libsolutil/Algorithms.h>
 #include <libsolutil/CommonData.h>
 #include <libsolutil/CommonIO.h>
@@ -3666,12 +3669,28 @@ FunctionTypePointer FunctionType::asExternallyCallableFunction(bool _inLibrary) 
 {
 	TypePointers parameterTypes;
 	for (auto const& t: m_parameterTypes)
+	{
+		// TODO :: Add warning/error here for using calldata arguments
+		// solAssert(
+		// 	!TypeProvider::isReferenceWithLocation(t, DataLocation::CallData),
+		// 	"Calldata arguments not allowed for externally callable functions. Use memory arguments instead."
+		// );
 		if (TypeProvider::isReferenceWithLocation(t, DataLocation::CallData))
+		{
+			// langutil::ErrorList _errorList;
+			// langutil::ErrorReporter m_errorReporter = langutil::ErrorReporter(_errorList);
+			// m_errorReporter.typeError(
+			// 	5042_error,
+			// 	SourceLocation(),
+			// 	"Calldata arguments not allowed for externally callable functions. Use memory arguments instead."
+			// );
 			parameterTypes.push_back(
 				TypeProvider::withLocationIfReference(DataLocation::Memory, t, true)
 			);
+		}
 		else
 			parameterTypes.push_back(t);
+	}
 
 	TypePointers returnParameterTypes;
 	for (auto const& returnParamType: m_returnParameterTypes)
